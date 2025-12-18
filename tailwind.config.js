@@ -2,8 +2,8 @@
 export default {
   content: [
     "./index.html",
+    "./app.jsx",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "./app.jsx" // Important since your app.jsx is in the root!
   ],
   theme: {
     extend: {},
