@@ -6,7 +6,7 @@ import Login from './src/pages/Login';
 import Register from './src/pages/Register';
 import Dashboard from './src/pages/Dashboard';
 import ProtectedRoute from './src/components/ProtectedRoute';
-import './src/index.css';
+import './src/index.css'; // Ensure this path matches where your CSS is
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
@@ -15,17 +15,12 @@ if (rootElement) {
       <AuthProvider>
         <HashRouter>
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
-            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
             </Route>
-
-            {/* Global Redirect */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </HashRouter>
