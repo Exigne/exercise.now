@@ -1,49 +1,94 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Zap, User, LogOut } from 'lucide-react';
+import { Activity, Zap, Trophy, LogOut, Plus, Trash2 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { logout } = useAuth();
+  const { currentUser, logout } = useAuth();
+  const [workouts, setWorkouts] = useState([]);
+  const [exercise, setExercise] = useState('');
+  const [sets, setSets] = useState('');
+  const [reps, setReps] = useState('');
 
-  const stats = [
-    { label: 'Workouts', value: '12', icon: <Activity className="text-blue-500" /> },
-    { label: 'Calories', value: '1,250', icon: <Zap className="text-yellow-500" /> },
-    { label: 'Streak', value: '5 Days', icon: <User className="text-green-500" /> },
-  ];
+  // Load workouts from local storage on startup
+  useEffect(() => {
+    const saved = localStorage.getItem(`workouts_${currentUser?.email}`);
+    if (saved) setWorkouts(JSON.parse(saved));
+  }, [currentUser]);
+
+  // Save workouts whenever the list changes
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`workouts_${currentUser?.email}`, JSON.stringify(workouts));
+    }
+  }, [workouts, currentUser]);
+
+  const addWorkout = (e) => {
+    e.preventDefault();
+    if (!exercise || !sets || !reps) return;
+
+    const newWorkout = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      exercise,
+      sets,
+      reps
+    };
+
+    setWorkouts([newWorkout, ...workouts]);
+    setExercise(''); setSets(''); setReps('');
+  };
+
+  const deleteWorkout = (id) => {
+    setWorkouts(workouts.filter(w => w.id !== id));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 font-sans">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
         <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-bold text-blue-500">Fitness Now</h1>
-          <button 
-            onClick={logout}
-            className="flex items-center gap-2 bg-gray-800 hover:bg-red-900/30 px-4 py-2 rounded-lg transition-colors border border-gray-700"
-          >
-            <LogOut size={18} /> Logout
+          <div>
+            <h1 className="text-2xl font-bold text-blue-500">Fitness Now</h1>
+            <p className="text-gray-400">User: {currentUser?.email}</p>
+          </div>
+          <button onClick={logout} className="p-2 hover:bg-red-900/20 rounded-lg text-red-500 transition-colors">
+            <LogOut size={24} />
           </button>
         </div>
 
-        <h2 className="text-4xl font-bold mb-2">Welcome back!</h2>
-        <p className="text-gray-400 mb-8">Here is your progress for this week.</p>
-
-        {/* This grid makes it look like a pro dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {stats.map((stat, index) => (
-            <div key={index} className="p-6 bg-gray-800 rounded-2xl border border-gray-700 shadow-xl">
-              <div className="mb-4">{stat.icon}</div>
-              <p className="text-gray-400 text-sm uppercase tracking-wider">{stat.label}</p>
-              <p className="text-3xl font-bold">{stat.value}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Log Workout Form */}
+          <div className="lg:col-span-1">
+            <div className="bg-gray-800 p-6 rounded-3xl border border-gray-700 sticky top-8">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Plus className="text-blue-500" /> Log Workout
+              </h2>
+              <form onSubmit={addWorkout} className="space-y-4">
+                <input 
+                  type="text" placeholder="Exercise (e.g. Bench Press)"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
+                  value={exercise} onChange={(e) => setExercise(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <input 
+                    type="number" placeholder="Sets"
+                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
+                    value={sets} onChange={(e) => setSets(e.target.value)}
+                  />
+                  <input 
+                    type="number" placeholder="Reps"
+                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 outline-none focus:border-blue-500"
+                    value={reps} onChange={(e) => setReps(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+                  Add to History
+                </button>
+              </form>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="p-10 border-2 border-dashed border-gray-700 rounded-3xl text-center text-gray-500">
-          Recent activity charts will appear here.
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Dashboard;
+          {/* Right Column: Stats and History */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-3
