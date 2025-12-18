@@ -3,10 +3,7 @@
 @tailwind utilities;
 
 body {
-  /* This uses Tailwind to set the background */
   @apply bg-gray-900 text-white m-0;
-  
-  /* Fallback styles */
   background-color: #111827; 
   color: white;
   font-family: sans-serif;
