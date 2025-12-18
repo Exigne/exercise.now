@@ -3,22 +3,14 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = () => {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, loading } = useAuth();
 
-  // This log will now show the actual user object instead of 'undefined'
-  console.log("Checking Access. Current User:", currentUser);
+  // If the app is still checking localStorage, show nothing or a spinner
+  if (loading) return <div className="min-h-screen bg-gray-900" />;
 
-  if (isLoading) {
-    return <div className="bg-gray-900 min-h-screen text-white p-10">Loading...</div>;
-  }
-  
-  // If there is no user, redirect to login
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
+  console.log("Final check - User is:", currentUser);
 
-  // If there is a user, allow them into the Dashboard
-  return <Outlet />;
+  return currentUser ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default ProtectedRoute;
