@@ -1,19 +1,16 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Check localStorage immediately on startup
   const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = localStorage.getItem('fitness_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    const saved = localStorage.getItem('fitness_user');
+    return saved ? JSON.parse(saved) : null;
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  const login = (userData) => {
-    console.log("Saving user to state and localStorage...", userData);
-    setCurrentUser(userData);
-    localStorage.setItem('fitness_user', JSON.stringify(userData));
+  const login = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('fitness_user', JSON.stringify(user));
   };
 
   const logout = () => {
@@ -22,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ currentUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
