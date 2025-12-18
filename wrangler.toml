@@ -1,7 +1,6 @@
 name = "fitness-now"
 compatibility_date = "2025-12-18"
-pages_build_output_dir = "./dist"
 
 [assets]
 directory = "./dist"
-binding = "ASSETS"
+# The "binding" line was removed because Cloudflare adds it automatically
