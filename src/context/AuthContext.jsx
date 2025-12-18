@@ -1,30 +1,29 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) setCurrentUser(JSON.parse(storedUser));
-    setIsLoading(false);
-  }, []);
+  // Check localStorage immediately on startup
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('fitness_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const login = (userData) => {
+    console.log("Saving user to state and localStorage...", userData);
     setCurrentUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('fitness_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('fitness_user');
   };
 
   return (
     <AuthContext.Provider value={{ currentUser, login, logout, isLoading }}>
-      {!isLoading ? children : <div style={{color: 'white', textAlign: 'center', padding: '50px'}}>Loading...</div>}
+      {children}
     </AuthContext.Provider>
   );
 };
