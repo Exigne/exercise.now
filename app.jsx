@@ -4,7 +4,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './src/context/AuthContext'; 
 import Login from './src/pages/Login';
 import Dashboard from './src/pages/Dashboard';
-import './index.css';
+import './src/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
