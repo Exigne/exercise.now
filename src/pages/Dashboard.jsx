@@ -15,7 +15,23 @@ import {
   Flame,
   Dumbbell,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Play,
+  Pause,
+  RotateCcw,
+  Bell,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -28,12 +44,98 @@ const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('strength');
   const [showAddForm, setShowAddForm] = useState(false);
   const [sortBy, setSortBy] = useState('date');
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restTime, setRestTime] = useState(90);
+  const [isRestTimerActive, setIsRestTimerActive] = useState(false);
+  const [restTimeLeft, setRestTimeLeft] = useState(90);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPRs, setNewPRs] = useState([]);
 
   const categories = [
     { id: 'strength', name: 'Strength', icon: Dumbbell, color: 'text-blue-400' },
     { id: 'cardio', name: 'Cardio', icon: Zap, color: 'text-green-400' },
     { id: 'flexibility', name: 'Flexibility', icon: Activity, color: 'text-purple-400' },
   ];
+
+  const muscleGroups = {
+    'Chest': ['bench press', 'push ups', 'dips', 'flyes', 'chest'],
+    'Back': ['pull ups', 'rows', 'deadlifts', 'lat pulldown', 'back'],
+    'Legs': ['squats', 'lunges', 'leg press', 'calf raises', 'legs'],
+    'Shoulders': ['shoulder press', 'lateral raises', 'front raises', 'shoulders'],
+    'Arms': ['bicep curls', 'tricep extensions', 'hammer curls', 'arms'],
+    'Core': ['planks', 'crunches', 'sit ups', 'russian twists', 'core']
+  };
+
+  // Rest Timer Logic
+  useEffect(() => {
+    let interval = null;
+    
+    if (isRestTimerActive && restTimeLeft > 0) {
+      interval = setInterval(() => {
+        setRestTimeLeft(restTimeLeft => restTimeLeft - 1);
+      }, 1000);
+    } else if (restTimeLeft === 0) {
+      setIsRestTimerActive(false);
+      // Play notification sound
+      new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmFgU7k9n1unEiBC13yO/eizEIHWq+8+OWT').play().catch(() => {});
+    }
+    
+    return () => clearInterval(interval);
+  }, [isRestTimerActive, restTimeLeft]);
+
+  // Personal Records Logic
+  useEffect(() => {
+    const records = {};
+    const newPersonalRecords = [];
+
+    workouts.forEach(workout => {
+      const { exercise, weight, reps, sets } = workout;
+      const volume = weight * reps * sets;
+      
+      if (!records[exercise]) {
+        records[exercise] = {
+          maxWeight: weight || 0,
+          maxReps: reps,
+          maxSets: sets,
+          maxVolume: volume,
+          totalWorkouts: 1
+        };
+      } else {
+        const current = records[exercise];
+        let isNewPR = false;
+        
+        if ((weight || 0) > current.maxWeight) {
+          current.maxWeight = weight;
+          isNewPR = true;
+        }
+        if (reps > current.maxReps) {
+          current.maxReps = reps;
+          isNewPR = true;
+        }
+        if (sets > current.maxSets) {
+          current.maxSets = sets;
+          isNewPR = true;
+        }
+        if (volume > current.maxVolume) {
+          current.maxVolume = volume;
+          isNewPR = true;
+        }
+        
+        current.totalWorkouts += 1;
+        
+        if (isNewPR) {
+          newPersonalRecords.push({
+            exercise,
+            type: 'PR',
+            value: Math.max(weight || 0, reps, sets, volume),
+            date: workout.date
+          });
+        }
+      }
+    });
+
+    setNewPRs(newPersonalRecords.slice(-3)); // Show last 3 PRs
+  }, [workouts]);
 
   useEffect(() => {
     const data = localStorage.getItem(`workouts_${currentUser?.email}`);
@@ -109,6 +211,52 @@ const Dashboard = () => {
     return streak;
   };
 
+  // Analytics Data
+  const getVolumeData = () => {
+    const volumeByDate = workouts.reduce((acc, workout) => {
+      const date = workout.date;
+      const volume = workout.sets * workout.reps * (workout.weight || 1);
+      
+      if (acc[date]) {
+        acc[date] += volume;
+      } else {
+        acc[date] = volume;
+      }
+      return acc;
+    }, {});
+
+    return Object.entries(volumeByDate)
+      .map(([date, volume]) => ({ date, volume }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(-30);
+  };
+
+  const getMuscleGroupData = () => {
+    const groupCounts = {};
+    
+    workouts.forEach(workout => {
+      const exercise = workout.exercise.toLowerCase();
+      let found = false;
+      
+      for (const [group, exercises] of Object.entries(muscleGroups)) {
+        if (exercises.some(ex => exercise.includes(ex))) {
+          groupCounts[group] = (groupCounts[group] || 0) + 1;
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        groupCounts['Other'] = (groupCounts['Other'] || 0) + 1;
+      }
+    });
+
+    return Object.entries(groupCounts).map(([name, value]) => ({
+      name,
+      value
+    }));
+  };
+
   const sortedWorkouts = [...workouts].sort((a, b) => {
     switch (sortBy) {
       case 'date':
@@ -121,6 +269,24 @@ const Dashboard = () => {
         return 0;
     }
   });
+
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+
+  // Rest Timer Functions
+  const toggleRestTimer = () => {
+    setIsRestTimerActive(!isRestTimerActive);
+  };
+
+  const resetRestTimer = () => {
+    setIsRestTimerActive(false);
+    setRestTimeLeft(restTime);
+  };
+
+  const formatRestTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
@@ -192,6 +358,161 @@ const Dashboard = () => {
               <BarChart3 size={32} className="text-orange-400" />
             </div>
           </div>
+        </div>
+
+        {/* New Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Volume Chart */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <TrendingUp size={24} className="text-blue-400" />
+              <h2 className="text-xl font-bold">Volume Progress</h2>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={getVolumeData()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1F2937', 
+                      border: '1px solid #374151',
+                      borderRadius: '8px'
+                    }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="volume" 
+                    stroke="#3B82F6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Muscle Group Breakdown */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <Target size={24} className="text-green-400" />
+              <h2 className="text-xl font-bold">Muscle Group Distribution</h2>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={getMuscleGroupData()}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getMuscleGroupData().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Personal Records */}
+        {newPRs.length > 0 && (
+          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm rounded-2xl border border-yellow-500/30 p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <Trophy size={24} className="text-yellow-400" />
+              <h2 className="text-xl font-bold text-yellow-400">Recent Personal Records!</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {newPRs.map((pr, index) => (
+                <div key={index} className="bg-gray-900/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">{pr.exercise}</p>
+                      <p className="text-sm text-gray-400">New PR achieved!</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Zap size={16} className="text-yellow-400" />
+                      <span className="font-bold text-yellow-400">{pr.value}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rest Timer */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Clock size={24} className="text-blue-400" />
+              <h2 className="text-xl font-bold">Rest Timer</h2>
+            </div>
+            <button
+              onClick={() => setShowRestTimer(!showRestTimer)}
+              className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
+            >
+              {showRestTimer ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+
+          {showRestTimer && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-blue-400 mb-4">
+                  {formatRestTime(restTimeLeft)}
+                </div>
+                <div className="flex justify-center space-x-2 mb-4">
+                  {[60, 90, 120, 180].map(time => (
+                    <button
+                      key={time}
+                      onClick={() => {
+                        setRestTime(time);
+                        setRestTimeLeft(time);
+                        setIsRestTimerActive(false);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                        restTime === time
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {time >= 120 ? `${time/60}min` : `${time}s`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={toggleRestTimer}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    isRestTimerActive
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : 'bg-green-500 hover:bg-green-600'
+                  }`}
+                >
+                  {isRestTimerActive ? <Pause size={16} /> : <Play size={16} />}
+                  <span>{isRestTimerActive ? 'Pause' : 'Start'}</span>
+                </button>
+                <button
+                  onClick={resetRestTimer}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  <RotateCcw size={16} />
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
