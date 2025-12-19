@@ -13,3 +13,12 @@ id = "your-kv-namespace-id"  # You'll get this from Cloudflare dashboard
 binding = "DB"
 database_name = "fitness-tracker"
 database_id = "your-d1-database-id"  # You'll get this from Cloudflare dashboard
+{
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fittrack",
+      "database_id": "7fb370d2-3062-41af-a34d-aa3dafa2d614"
+    }
+  ]
+}
