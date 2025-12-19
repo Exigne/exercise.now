@@ -457,13 +457,12 @@ const Dashboard = () => {
               <Clock size={24} className="text-blue-400" />
               <h2 className="text-xl font-bold">Rest Timer</h2>
             </div>
-            <button
-              onClick={() => setShowRestTimer(!showRestTimer)}
-              className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
-            >
-              {showRestTimer ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
+             <button
+             onClick={() => setShowRestTimer(!showRestTimer)}
+             className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
+>
+  {showRestTimer ? <Bell size={16} /> : <Clock size={16} />}
+</button>          </div>
 
           {showRestTimer && (
             <div className="space-y-4">
