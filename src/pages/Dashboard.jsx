@@ -14,7 +14,6 @@ import {
   Award,
   Flame,
   Dumbbell,
-  ChevronRight,
   BarChart3,
   Play,
   Pause,
@@ -22,6 +21,7 @@ import {
   Bell
 } from 'lucide-react';
 
+// Import chart components from recharts
 import { 
   ResponsiveContainer,
   LineChart,
