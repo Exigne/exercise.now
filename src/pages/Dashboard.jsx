@@ -36,7 +36,7 @@ import {
 } from 'recharts';
 
 // ✅ THESE SHOULD ONLY APPEAR ONCE - remove any duplicates
-import ExerciseSelector from './ExerciseSelector';
+import ExerciseSelector from '../components/ExerciseSelector';
 import { exerciseDatabase } from '../data/exercises';
 
 const Dashboard = () => {
