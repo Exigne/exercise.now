@@ -59,13 +59,8 @@ export const exerciseDatabase = {
   }
 };
 
-export const getExercisesByCategory = (category) => {
-  return exerciseDatabase[category] || null;
-};
-
 export const getAllExercises = (category) => {
   const categoryData = exerciseDatabase[category];
   if (!categoryData) return [];
-  
   return Object.values(categoryData.categories).flatMap(cat => cat.exercises);
 };
