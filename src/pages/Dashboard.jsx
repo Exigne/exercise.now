@@ -16,23 +16,24 @@ import {
   Dumbbell,
   ChevronRight,
   BarChart3,
+  Play,
+  Pause,
+  RotateCcw,
+  Bell
+} from 'lucide-react';
+
+import { 
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  Play,
-  Pause,
-  RotateCcw,
-  Bell,
-  Eye,
-  EyeOff
-} from 'lucide-react';
+  Cell
+} from 'recharts';
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
