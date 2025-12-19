@@ -1,7 +1,7 @@
 export async function onRequest(context) {
   const { request, env } = context;
   
-  // Add CORS headers
+  // ✅ CRITICAL: Add CORS headers for POST requests
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -9,59 +9,52 @@ export async function onRequest(context) {
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  // Handle OPTIONS preflight
+  // ✅ Handle OPTIONS preflight requests
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers });
   }
 
+  console.log("📡 API Request:", request.method, request.url);
+
   if (request.method === 'GET') {
     const url = new URL(request.url);
     const email = url.searchParams.get('email');
+    console.log("📧 GET request for:", email);
     
-    if (!email) {
-      return new Response(JSON.stringify([]), { headers });
-    }
-
     try {
-      // Try D1 first, fallback to KV
       if (env.DB) {
         const { results } = await env.DB.prepare(
           'SELECT * FROM workouts WHERE user_email = ? ORDER BY created_at DESC'
         ).bind(email).all();
-        return Response.json(results);
+        return Response.json(results || []);
       } else if (env.WORKOUTS_KV) {
         const data = await env.WORKOUTS_KV.get(`workouts_${email}`);
         return Response.json(data ? JSON.parse(data) : []);
-      } else {
-        // Fallback - return empty array
-        return Response.json([]);
       }
+      return Response.json([]);
     } catch (err) {
       console.error("GET Error:", err);
-      return Response.json([]);
+      return Response.json({ error: err.message }, { status: 500, headers });
     }
   }
 
   if (request.method === 'POST') {
     try {
+      console.log("📥 POST request received");
       const workout = await request.json();
-      console.log("📥 Received workout:", workout);
-      
+      console.log("📊 Workout data:", workout);
+
+      // Validate required fields
       if (!workout.user_email || !workout.exercise) {
-        return new Response(JSON.stringify({ error: "Missing required fields" }), { 
-          status: 400, 
-          headers 
-        });
+        return Response.json({ error: "Missing required fields" }, { status: 400, headers });
       }
 
-      // Add timestamp
       const workoutWithTimestamp = {
         ...workout,
         id: Date.now(),
         created_at: new Date().toISOString()
       };
 
-      // Try D1 first
       if (env.DB) {
         const { results } = await env.DB.prepare(
           'INSERT INTO workouts (user_email, exercise, category, sets, reps, weight, duration, distance, intensity, date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *'
@@ -79,8 +72,16 @@ export async function onRequest(context) {
           workoutWithTimestamp.created_at
         ).all();
         
+        console.log("✅ Saved to DB:", results[0]);
         return Response.json(results[0]);
-      } else if (env.WORKOUTS_KV) {
-        // KV storage fallback
-        const existing = await env.WORKOUTS_KV.get(`workouts_${workout.user_email}`);
-        const
+      }
+      
+      return Response.json(workoutWithTimestamp);
+    } catch (err) {
+      console.error("POST Error:", err);
+      return Response.json({ error: err.message }, { status: 500, headers });
+    }
+  }
+
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers });
+}
