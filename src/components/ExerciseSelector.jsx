@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { ChevronDown, Search, Dumbbell, Zap, Activity } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { exerciseDatabase, getAllExercises } from '../data/exercises';
 
 const ExerciseSelector = ({ selectedCategory, onExerciseSelect, currentExercise }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState('');
 
   const categoryData = exerciseDatabase[selectedCategory];
   if (!categoryData) return null;
