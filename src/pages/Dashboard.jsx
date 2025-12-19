@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// NEW IMPORTS
+import ExerciseSelector from './ExerciseSelector';
+import { exerciseDatabase } from '../data/exercises';import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Activity, 
