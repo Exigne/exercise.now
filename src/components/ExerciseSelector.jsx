@@ -1,8 +1,7 @@
 import React from 'react';
 
 const ExerciseSelector = ({ selectedCategory, onExerciseSelect, currentExercise }) => {
-  // Lists for each category
-  const list = {
+  const exercises = {
     strength: [
       'Bench Press', 'Squats', 'Deadlift', 'Pull-ups', 
       'Overhead Press', 'Dumbbell Rows', 'Bicep Curls'
@@ -17,18 +16,18 @@ const ExerciseSelector = ({ selectedCategory, onExerciseSelect, currentExercise 
     ]
   };
 
-  const currentList = list[selectedCategory] || [];
+  const currentList = exercises[selectedCategory] || [];
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-400">Exercise</label>
+      <label className="block text-sm font-medium text-gray-400">Select Exercise</label>
       <select 
         value={currentExercise} 
         onChange={(e) => onExerciseSelect(e.target.value)}
         className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
         required
       >
-        <option value="">Select an exercise...</option>
+        <option value="">-- Choose an exercise --</option>
         {currentList.map(ex => (
           <option key={ex} value={ex}>{ex}</option>
         ))}
