@@ -1,6 +1,4 @@
-// NEW IMPORTS
-import ExerciseSelector from './ExerciseSelector';
-import { exerciseDatabase } from '../data/exercises';import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Activity, 
@@ -37,7 +35,7 @@ import {
   Cell
 } from 'recharts';
 
-// NEW IMPORTS
+// ✅ THESE SHOULD ONLY APPEAR ONCE - remove any duplicates
 import ExerciseSelector from './ExerciseSelector';
 import { exerciseDatabase } from '../data/exercises';
 
