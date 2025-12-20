@@ -1,97 +1,46 @@
-// Handle GET requests - Fetch workouts for a user
-export async function onRequestGet({ request, env }) {
-  try {
-    const url = new URL(request.url);
-    const email = url.searchParams.get('email');
-    
-    if (!email) {
-      return new Response(JSON.stringify({ error: 'Email required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+export async function onRequest(context) {
+  const { env, request } = context;
+  const url = new URL(request.url);
+
+  // common headers
+  const headers = { 'Content-Type': 'application/json' };
+
+  // CORS pre-flight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
+
+  /* ---------- GET /api/workouts?user=email ---------- */
+  if (request.method === 'GET') {
+    const user = url.searchParams.get('user');
+    if (!user) return new Response('Missing ?user=', { status: 400, headers });
 
     const { results } = await env.DB.prepare(
-      'SELECT * FROM workouts WHERE user_email = ? ORDER BY created_at DESC'
-    ).bind(email).all();
+      'SELECT * FROM workouts WHERE user_email = ? ORDER BY created_at DESC LIMIT 100'
+    )
+      .bind(user)
+      .all();
 
-    return new Response(JSON.stringify(results), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Response.json(results, { headers });
   }
-}
 
-// Handle POST requests - Add a new workout
-export async function onRequestPost({ request, env }) {
-  try {
-    const workout = await request.json();
-    
-    if (!workout.user_email || !workout.exercise) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+  /* ---------- POST /api/workouts ---------- */
+  if (request.method === 'POST') {
+    const body = await request.json();
 
-    const result = await env.DB.prepare(
-      `INSERT INTO workouts (user_email, exercise, category, sets, reps, weight, intensity, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      workout.user_email,
-      workout.exercise,
-      workout.category || 'strength',
-      workout.sets || 0,
-      workout.reps || 0,
-      workout.weight || 0,
-      workout.intensity || 'medium',
-      workout.created_at || new Date().toISOString()
-    ).run();
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      id: result.meta.last_row_id 
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-}
-
-// Handle DELETE requests - Delete a workout
-export async function onRequestDelete({ request, env }) {
-  try {
-    const { id } = await request.json();
-    
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Workout ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // basic validation
+    if (!body.user_email || !body.exercise || !body.sets || !body.reps || !body.weight) {
+      return new Response('Missing fields', { status: 400, headers });
     }
 
     await env.DB.prepare(
-      'DELETE FROM workouts WHERE id = ?'
-    ).bind(id).run();
+      'INSERT INTO workouts (user_email, exercise, sets, reps, weight) VALUES (?, ?, ?, ?, ?)'
+    )
+      .bind(body.user_email, body.exercise, body.sets, body.reps, body.weight)
+      .run();
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Response.json({ ok: true }, { headers });
   }
+
+  return new Response('Method Not Allowed', { status: 405, headers });
 }
