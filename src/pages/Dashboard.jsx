@@ -13,20 +13,25 @@ const Dashboard = ({ user }) => {
 
 /* ---------- READ ---------- */
   const fetchWorkoutHistory = async () => {
-    // Bit 1: Safe check before fetching
-    if (!user?.email) return; 
+    // Bit 1: Safe check! If user is null, stop here.
+    if (!user?.email) return;
 
-    const res = await fetch('/api/workouts?user=' + encodeURIComponent(user.email));
-    if (!res.ok) return console.error('DB read failed');
-    const data = await res.json();
-    setHistory(data);
+    try {
+      const res = await fetch('/api/workouts?user=' + encodeURIComponent(user.email));
+      if (!res.ok) return;
+      const data = await res.json();
+      setHistory(data);
+    } catch (err) {
+      console.error("Database fetch failed", err);
+    }
   };
 
-useEffect(() => {
+  useEffect(() => {
+    // Bit 2: Only fetch if the email actually exists
     if (user?.email) {
       fetchWorkoutHistory();
     }
-  }, [user?.email]); // Bit 2: Add the "?" here too
+  }, [user?.email]);
 
   /* ---------- WRITE ---------- */
   const handleLogWorkout = async (e) => {
