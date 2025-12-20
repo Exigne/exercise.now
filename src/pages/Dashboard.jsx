@@ -1,89 +1,105 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Replace these with your actual Supabase Project URL and Anon Key
-const supabaseUrl = 'https://bpbbljmzgnjiusavpgdg.supabase.co';
-const supabaseAnonKey = 'sb_publishable_YxNCAWQYsqTDlheTuzP6SA_5yffyH_S';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Dashboard = ({ user }) => {
   const [exercise, setExercise] = useState('');
-  const [sets, setSets] = useState('');
-  const [reps, setReps] = useState('');
-  const [weight, setWeight] = useState('');
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
-  
-  if (!user?.email) return <p>Loading…</p>;
-  
-  // 1. Fetch history from Supabase on load
+  const [sets, setSets]         = useState('');
+  const [reps, setReps]         = useState('');
+  const [weight, setWeight]     = useState('');
+  const [history, setHistory]   = useState([]);
+  const [loading, setLoading]   = useState(false);
+
+  // guard – don’t render until we have a user
+  if (!user?.email) return <p style={{ padding: 20 }}>Loading…</p>;
+
+  /* ---------- READ ---------- */
+  const fetchWorkoutHistory = async () => {
+    const res = await fetch('/api/workouts?user=' + encodeURIComponent(user.email));
+    if (!res.ok) return alert('DB read failed');
+    const data = await res.json();
+    setHistory(data);
+  };
+
   useEffect(() => {
     fetchWorkoutHistory();
   }, [user.email]);
 
-  const fetchWorkoutHistory = async () => {
-    const { data, error } = await supabase
-      .from('workouts')
-      .select('*')
-      .eq('user_email', user.email)
-      .order('created_at', { ascending: false });
-
-    if (error) console.error('Error fetching history:', error);
-    else setHistory(data);
-  };
-
-  // 2. Save workout to Supabase
+  /* ---------- WRITE ---------- */
   const handleLogWorkout = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const newWorkout = {
+    const payload = {
       user_email: user.email,
-      exercise: exercise,
-      sets: parseInt(sets),
-      reps: parseInt(reps),
-      weight: parseFloat(weight),
+      exercise,
+      sets:   Number(sets),
+      reps:   Number(reps),
+      weight: Number(weight),
     };
 
-    const { data, error } = await supabase
-      .from('workouts')
-      .insert([newWorkout]);
+    const res = await fetch('/api/workouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-    if (error) {
-      alert('Error saving to Exigne\'s Project: ' + error.message);
+    if (!res.ok) {
+      alert('Save failed');
     } else {
-      alert('Workout logged successfully!');
-      setExercise('');
-      setSets('');
-      setReps('');
-      setWeight('');
-      fetchWorkoutHistory(); // Refresh the list
+      alert('Workout logged!');
+      setExercise(''); setSets(''); setReps(''); setWeight('');
+      fetchWorkoutHistory();
     }
     setLoading(false);
   };
 
+  /* ---------- RENDER ---------- */
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
       <h2>Welcome, {user.email}</h2>
-      
+
       <form onSubmit={handleLogWorkout} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <input type="text" placeholder="Exercise (e.g. Bench Press)" value={exercise} onChange={(e) => setExercise(e.target.value)} required />
-        <input type="number" placeholder="Sets" value={sets} onChange={(e) => setSets(e.target.value)} required />
-        <input type="number" placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} required />
-        <input type="number" placeholder="Weight (kg)" value={weight} onChange={(e) => setWeight(e.target.value)} required />
+        <input
+          value={exercise}
+          onChange={(e) => setExercise(e.target.value)}
+          placeholder="Exercise (e.g. Bench Press)"
+          required
+        />
+        <input
+          type="number"
+          value={sets}
+          onChange={(e) => setSets(e.target.value)}
+          placeholder="Sets"
+          required
+        />
+        <input
+          type="number"
+          value={reps}
+          onChange={(e) => setReps(e.target.value)}
+          placeholder="Reps"
+          required
+        />
+        <input
+          type="number"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+          placeholder="Weight (kg)"
+          required
+        />
         <button type="submit" disabled={loading}>
-          {loading ? 'Logging...' : 'Log Session'}
+          {loading ? 'Logging…' : 'Log session'}
         </button>
       </form>
 
       <hr style={{ margin: '30px 0' }} />
 
-      <h3>Recent Workouts</h3>
-      {history.length === 0 ? <p>No workouts found.</p> : (
+      <h3>Recent workouts</h3>
+      {history.length === 0 ? (
+        <p>No workouts found.</p>
+      ) : (
         <ul>
-          {history.map((item) => (
-            <li key={item.id}>
-              <strong>{item.exercise}</strong>: {item.sets}x{item.reps} @ {item.weight}kg
+          {history.map((w) => (
+            <li key={w.id}>
+              <strong>{w.exercise}</strong>: {w.sets} × {w.reps} @ {w.weight} kg
             </li>
           ))}
         </ul>
