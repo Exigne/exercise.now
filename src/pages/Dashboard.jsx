@@ -22,9 +22,11 @@ const Dashboard = ({ user }) => {
     setHistory(data);
   };
 
-  useEffect(() => {
-    fetchWorkoutHistory();
-  }, [user.email]);
+useEffect(() => {
+    if (user?.email) {
+      fetchWorkoutHistory();
+    }
+  }, [user?.email]); // Bit 2: Add the "?" here too
 
   /* ---------- WRITE ---------- */
   const handleLogWorkout = async (e) => {
