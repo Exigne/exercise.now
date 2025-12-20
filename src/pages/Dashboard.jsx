@@ -120,8 +120,8 @@ useEffect(() => {
           ))}
         </ul>
 )}
-    </div>
-  ); // <--- Check this semicolon
-}; // <--- Check this closing brace
+</div>
+  );
+};
 
 export default Dashboard;
