@@ -11,10 +11,13 @@ const Dashboard = ({ user }) => {
   // guard – don’t render until we have a user
   if (!user?.email) return <p style={{ padding: 20 }}>Loading…</p>;
 
-  /* ---------- READ ---------- */
+/* ---------- READ ---------- */
   const fetchWorkoutHistory = async () => {
+    // Bit 1: Safe check before fetching
+    if (!user?.email) return; 
+
     const res = await fetch('/api/workouts?user=' + encodeURIComponent(user.email));
-    if (!res.ok) return alert('DB read failed');
+    if (!res.ok) return console.error('DB read failed');
     const data = await res.json();
     setHistory(data);
   };
