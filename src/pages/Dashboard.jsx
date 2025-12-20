@@ -13,7 +13,9 @@ const Dashboard = ({ user }) => {
   const [weight, setWeight] = useState('');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  
+  if (!user?.email) return <p>Loading…</p>;
+  
   // 1. Fetch history from Supabase on load
   useEffect(() => {
     fetchWorkoutHistory();
