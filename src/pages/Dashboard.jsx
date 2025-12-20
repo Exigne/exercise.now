@@ -120,8 +120,8 @@ useEffect(() => {
           ))}
         </ul>
 )}
-</div>
+    </div>
   );
-};
+}; // <--- This bracket must exist before the export!
 
 export default Dashboard;
