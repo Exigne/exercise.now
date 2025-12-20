@@ -119,8 +119,9 @@ useEffect(() => {
             </li>
           ))}
         </ul>
-      )}
+)}
     </div>
-  );
+  ); // <--- Check this semicolon
+}; // <--- Check this closing brace
 
 export default Dashboard;
