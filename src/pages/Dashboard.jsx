@@ -58,59 +58,69 @@ useEffect(() => {
   };
 
   /* ---------- RENDER ---------- */
+/* ---------- RENDER ---------- */
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <h2>Welcome, {user.email}</h2>
+    <div className="p-5 max-w-xl mx-auto bg-gray-900 text-white min-h-screen">
+      <h2 className="text-2xl font-bold mb-4">Welcome, {user?.email}</h2>
 
-      <form onSubmit={handleLogWorkout} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <form onSubmit={handleLogWorkout} className="flex flex-col gap-3">
         <input
+          className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
           value={exercise}
           onChange={(e) => setExercise(e.target.value)}
           placeholder="Exercise (e.g. Bench Press)"
           required
         />
-        <input
-          type="number"
-          value={sets}
-          onChange={(e) => setSets(e.target.value)}
-          placeholder="Sets"
-          required
-        />
-        <input
-          type="number"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-          placeholder="Reps"
-          required
-        />
-        <input
-          type="number"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          placeholder="Weight (kg)"
-          required
-        />
-        <button type="submit" disabled={loading}>
+        <div className="grid grid-cols-3 gap-2">
+            <input
+              type="number"
+              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+              value={sets}
+              onChange={(e) => setSets(e.target.value)}
+              placeholder="Sets"
+              required
+            />
+            <input
+              type="number"
+              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+              value={reps}
+              onChange={(e) => setReps(e.target.value)}
+              placeholder="Reps"
+              required
+            />
+            <input
+              type="number"
+              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              placeholder="kg"
+              required
+            />
+        </div>
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold disabled:opacity-50"
+        >
           {loading ? 'Logging…' : 'Log session'}
         </button>
       </form>
 
-      <hr style={{ margin: '30px 0' }} />
+      <hr className="my-8 border-gray-700" />
 
-      <h3>Recent workouts</h3>
+      <h3 className="text-xl font-semibold mb-3">Recent workouts</h3>
       {history.length === 0 ? (
-        <p>No workouts found.</p>
+        <p className="text-gray-400">No workouts found.</p>
       ) : (
-        <ul>
+        <ul className="space-y-2">
           {history.map((w) => (
-            <li key={w.id}>
-              <strong>{w.exercise}</strong>: {w.sets} × {w.reps} @ {w.weight} kg
+            <li key={w.id} className="bg-gray-800 p-3 rounded border border-gray-700">
+              <span className="font-bold text-blue-400">{w.exercise}</span>: {w.sets} × {w.reps} @ {w.weight} kg
             </li>
           ))}
         </ul>
       )}
     </div>
   );
-};
 
 export default Dashboard;
