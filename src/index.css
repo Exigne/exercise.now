@@ -2,10 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-900 text-white m-0;
-  background-color: #111827; 
-  color: white;
-  font-family: sans-serif;
-  margin: 0;
+@layer base {
+  body {
+    @apply bg-gray-900 text-white m-0 antialiased;
+    font-family: sans-serif;
+  }
 }
