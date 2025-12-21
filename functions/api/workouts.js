@@ -1,46 +1,70 @@
-export async function onRequest(context) {
-  const { env, request } = context;
-  const url = new URL(request.url);
+// functions/api/workouts.js
 
-  // common headers
-  const headers = { 'Content-Type': 'application/json' };
+// GET - Fetch workout history for a user
+export async function onRequestGet(context) {
+  const { DB } = context.env;
+  const url = new URL(context.request.url);
+  const userEmail = url.searchParams.get('user');
 
-  // CORS pre-flight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers });
+  if (!userEmail) {
+    return Response.json(
+      { message: 'User email required' },
+      { status: 400 }
+    );
   }
 
-  /* ---------- GET /api/workouts?user=email ---------- */
-  if (request.method === 'GET') {
-    const user = url.searchParams.get('user');
-    if (!user) return new Response('Missing ?user=', { status: 400, headers });
-
-    const { results } = await env.DB.prepare(
-      'SELECT * FROM workouts WHERE user_email = ? ORDER BY created_at DESC LIMIT 100'
+  try {
+    const { results } = await DB.prepare(
+      'SELECT * FROM workouts WHERE user_email = ? ORDER BY created_at DESC LIMIT 50'
     )
-      .bind(user)
+      .bind(userEmail)
       .all();
 
-    return Response.json(results, { headers });
+    return Response.json(results || []);
+  } catch (error) {
+    console.error('Error fetching workouts:', error);
+    return Response.json(
+      { message: 'Failed to fetch workouts', error: error.message },
+      { status: 500 }
+    );
   }
+}
 
-  /* ---------- POST /api/workouts ---------- */
-  if (request.method === 'POST') {
-    const body = await request.json();
+// POST - Create a new workout
+export async function onRequestPost(context) {
+  const { DB } = context.env;
 
-    // basic validation
-    if (!body.user_email || !body.exercise || !body.sets || !body.reps || !body.weight) {
-      return new Response('Missing fields', { status: 400, headers });
+  try {
+    const { user_email, exercise, sets, reps, weight } = await context.request.json();
+
+    // Validate input
+    if (!user_email || !exercise || !sets || !reps || !weight) {
+      return Response.json(
+        { message: 'All fields are required' },
+        { status: 400 }
+      );
     }
 
-    await env.DB.prepare(
-      'INSERT INTO workouts (user_email, exercise, sets, reps, weight) VALUES (?, ?, ?, ?, ?)'
+    // Insert workout
+    const result = await DB.prepare(
+      'INSERT INTO workouts (user_email, exercise, sets, reps, weight, created_at) VALUES (?, ?, ?, ?, ?, datetime("now"))'
     )
-      .bind(body.user_email, body.exercise, body.sets, body.reps, body.weight)
+      .bind(user_email, exercise, sets, reps, weight)
       .run();
 
-    return Response.json({ ok: true }, { headers });
-  }
+    if (!result.success) {
+      throw new Error('Failed to insert workout');
+    }
 
-  return new Response('Method Not Allowed', { status: 405, headers });
+    return Response.json(
+      { message: 'Workout logged successfully', id: result.meta.last_row_id },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error('Error logging workout:', error);
+    return Response.json(
+      { message: 'Failed to log workout', error: error.message },
+      { status: 500 }
+    );
+  }
 }
