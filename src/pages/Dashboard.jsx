@@ -33,18 +33,25 @@ const Dashboard = () => {
   }
 
   /* ---------- READ ---------- */
-  const fetchWorkoutHistory = async () => {
-    if (!user?.email) return;
+const fetchWorkoutHistory = async () => {
+  if (!user?.email) return;
 
-    try {
-      const res = await fetch('/api/workouts?user=' + encodeURIComponent(user.email));
-      if (!res.ok) return;
-      const data = await res.json();
-      setHistory(data);
-    } catch (err) {
-      console.error("Database fetch failed", err);
+  try {
+    // CHANGE THIS: Add your full Cloudflare Worker URL here
+    const res = await fetch('https://exercisenow.mbibs81.workers.dev/api/workouts?user=' + encodeURIComponent(user.email));
+    
+    // CHECK: Make sure the response is actually okay before parsing
+    if (!res.ok) {
+        console.error('Server returned an error');
+        return;
     }
-  };
+
+    const data = await res.json();
+    setHistory(data);
+  } catch (err) {
+    console.error("JSON Parsing failed:", err);
+  }
+};
 
   useEffect(() => {
     if (user?.email) {
