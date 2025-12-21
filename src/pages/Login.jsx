@@ -30,7 +30,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call login with both email and password
+      // Call login - this now hits the API
       await login({ email, password });
       navigate('/dashboard');
     } catch (error) {
