@@ -1,19 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-const Dashboard = ({ user }) => {
+const Dashboard = () => {
+  // FIXED: Use useAuth hook instead of expecting user as a prop
+  const { currentUser: user, loading: authLoading } = useAuth();
+  
   const [exercise, setExercise] = useState('');
-  const [sets, setSets]         = useState('');
-  const [reps, setReps]         = useState('');
-  const [weight, setWeight]     = useState('');
-  const [history, setHistory]   = useState([]);
-  const [loading, setLoading]   = useState(false);
+  const [sets, setSets] = useState('');
+  const [reps, setReps] = useState('');
+  const [weight, setWeight] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // guard – don’t render until we have a user
-  if (!user?.email) return <p style={{ padding: 20 }}>Loading…</p>;
+  // Guard – don't render until authentication is complete
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
-/* ---------- READ ---------- */
+  if (!user?.email) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <p>No user found. Please log in.</p>
+      </div>
+    );
+  }
+
+  /* ---------- READ ---------- */
   const fetchWorkoutHistory = async () => {
-    // Bit 1: Safe check! If user is null, stop here.
     if (!user?.email) return;
 
     try {
@@ -27,7 +47,6 @@ const Dashboard = ({ user }) => {
   };
 
   useEffect(() => {
-    // Bit 2: Only fetch if the email actually exists
     if (user?.email) {
       fetchWorkoutHistory();
     }
@@ -41,32 +60,40 @@ const Dashboard = ({ user }) => {
     const payload = {
       user_email: user.email,
       exercise,
-      sets:   Number(sets),
-      reps:   Number(reps),
+      sets: Number(sets),
+      reps: Number(reps),
       weight: Number(weight),
     };
 
-    const res = await fetch('/api/workouts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      alert('Save failed');
-    } else {
-      alert('Workout logged!');
-      setExercise(''); setSets(''); setReps(''); setWeight('');
-      fetchWorkoutHistory();
+      if (!res.ok) {
+        alert('Save failed');
+      } else {
+        alert('Workout logged!');
+        setExercise('');
+        setSets('');
+        setReps('');
+        setWeight('');
+        fetchWorkoutHistory();
+      }
+    } catch (error) {
+      console.error('Error logging workout:', error);
+      alert('Failed to log workout');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   /* ---------- RENDER ---------- */
-/* ---------- RENDER ---------- */
   return (
     <div className="p-5 max-w-xl mx-auto bg-gray-900 text-white min-h-screen">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {user?.email}</h2>
+      <h2 className="text-2xl font-bold mb-4">Welcome, {user.email}</h2>
 
       <form onSubmit={handleLogWorkout} className="flex flex-col gap-3">
         <input
@@ -77,33 +104,33 @@ const Dashboard = ({ user }) => {
           required
         />
         <div className="grid grid-cols-3 gap-2">
-            <input
-              type="number"
-              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
-              value={sets}
-              onChange={(e) => setSets(e.target.value)}
-              placeholder="Sets"
-              required
-            />
-            <input
-              type="number"
-              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
-              value={reps}
-              onChange={(e) => setReps(e.target.value)}
-              placeholder="Reps"
-              required
-            />
-            <input
-              type="number"
-              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="kg"
-              required
-            />
+          <input
+            type="number"
+            className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+            value={sets}
+            onChange={(e) => setSets(e.target.value)}
+            placeholder="Sets"
+            required
+          />
+          <input
+            type="number"
+            className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+            value={reps}
+            onChange={(e) => setReps(e.target.value)}
+            placeholder="Reps"
+            required
+          />
+          <input
+            type="number"
+            className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            placeholder="kg"
+            required
+          />
         </div>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
           className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold disabled:opacity-50"
         >
@@ -124,9 +151,9 @@ const Dashboard = ({ user }) => {
             </li>
           ))}
         </ul>
-)}
+      )}
     </div>
   );
-}; // <--- This bracket must exist before the export!
+};
 
 export default Dashboard;
